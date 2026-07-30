@@ -9,8 +9,8 @@ import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 import 'package:flutter_application_1/screens/admin/admin_home_screen.dart';
 import 'package:flutter_application_1/screens/teknisi/teknisi_home_screen.dart';
 import 'package:flutter_application_1/screens/user/user_home_screen.dart';
-import 'forgot_password_screen.dart';
-import 'register_screen.dart';
+import 'package:flutter_application_1/screens/auth/forgot_password_screen.dart';
+import 'package:flutter_application_1/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   static const routeName = '/login';
