@@ -82,7 +82,7 @@ void main() {
 
   while (jalan) {
     print("\n==============================");
-    print("     ARCANE PULL     ");
+    print("     ENDLESS PULL     ");
     print("==============================");
     print("1. Gacha 1x");
     print("2. Lihat Inventory");
