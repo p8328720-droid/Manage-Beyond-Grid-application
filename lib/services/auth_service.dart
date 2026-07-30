@@ -233,6 +233,53 @@ class AuthService {
     _persistCurrentUser(user.copyWith(pushNotificationsEnabled: enabled));
   }
 
+  // Settings — change password while already logged in. Unlike
+  // [resetPassword] (forgot-password flow), this requires the current
+  // password to match before it's allowed to change.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    final user = _currentUser;
+    if (user == null) {
+      throw const AuthException('Sesi berakhir, silakan masuk kembali.');
+    }
+
+    final index = _demoAccounts.indexWhere(
+      (account) => account.email.toLowerCase() == user.email.toLowerCase(),
+    );
+    if (index == -1) {
+      throw const AuthException('Akun tidak ditemukan.');
+    }
+    if (_demoAccounts[index].password != currentPassword) {
+      throw const AuthException('Kata sandi saat ini salah.');
+    }
+    if (newPassword.length < 8) {
+      throw const AuthException('Kata sandi baru minimal 8 karakter.');
+    }
+
+    _demoAccounts[index] = _DemoAccount(
+      email: _demoAccounts[index].email,
+      password: newPassword,
+      user: _demoAccounts[index].user,
+    );
+  }
+
+  // Settings — permanently remove the current account and sign out.
+  Future<void> deleteAccount() async {
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    final user = _currentUser;
+    if (user == null) return;
+
+    _demoAccounts.removeWhere(
+      (account) => account.email.toLowerCase() == user.email.toLowerCase(),
+    );
+    _currentUser = null;
+  }
+
   void _persistCurrentUser(AppUser updated) {
     _currentUser = updated;
     final index = _demoAccounts.indexWhere(

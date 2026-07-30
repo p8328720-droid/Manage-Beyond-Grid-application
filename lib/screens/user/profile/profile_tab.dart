@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 import 'package:flutter_application_1/screens/user/profile/profile_details_view.dart';
 import 'package:flutter_application_1/screens/user/profile/push_notifications_view.dart';
+import 'package:flutter_application_1/screens/user/profile/settings_view.dart';
 
-enum _ProfilePage { main, details, notifications }
+enum _ProfilePage { main, details, notifications, settings }
 
-/// Hosts the Profile hub and its two sub-pages (Profile details, Push
-/// Notifications) as an internal stack, so the bottom nav bar owned by
-/// [UserHomeScreen] stays visible the whole time.
+// WhatsApp number for Support, in international format without symbols.
+const String _supportWhatsAppNumber = '6285717458151';
+
+/// Hosts the Profile hub and its sub-pages (Profile details, Push
+/// Notifications, Settings) as an internal stack, so the bottom nav bar
+/// owned by [UserHomeScreen] stays visible the whole time.
 class ProfileTab extends StatefulWidget {
   final VoidCallback onLogout;
 
@@ -27,10 +32,18 @@ class _ProfileTabState extends State<ProfileTab> {
 
   void _goTo(_ProfilePage page) => setState(() => _page = page);
 
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — segera hadir')),
+  Future<void> _openWhatsAppSupport() async {
+    final uri = Uri.parse(
+      'https://wa.me/$_supportWhatsAppNumber'
+      '?text=${Uri.encodeComponent('Halo, saya butuh bantuan terkait aplikasi MBG.')}',
     );
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Tidak dapat membuka WhatsApp.')),
+      );
+    }
   }
 
   @override
@@ -40,15 +53,20 @@ class _ProfileTabState extends State<ProfileTab> {
         return ProfileDetailsView(onBack: () => _goTo(_ProfilePage.main));
       case _ProfilePage.notifications:
         return PushNotificationsView(onBack: () => _goTo(_ProfilePage.main));
+      case _ProfilePage.settings:
+        return SettingsView(
+          onBack: () => _goTo(_ProfilePage.main),
+          onAccountDeleted: widget.onLogout,
+        );
       case _ProfilePage.main:
         final user = _user;
         return _ProfileMainView(
           name: user?.name ?? 'Pengguna',
           email: user?.email ?? '-',
           onTapDetails: () => _goTo(_ProfilePage.details),
-          onTapSettings: () => _showComingSoon('Settings'),
+          onTapSettings: () => _goTo(_ProfilePage.settings),
           onTapNotifications: () => _goTo(_ProfilePage.notifications),
-          onTapSupport: () => _showComingSoon('Support'),
+          onTapSupport: _openWhatsAppSupport,
           onLogout: widget.onLogout,
         );
     }
