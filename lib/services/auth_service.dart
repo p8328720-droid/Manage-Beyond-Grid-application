@@ -203,6 +203,49 @@ class AuthService {
   void logout() {
     _currentUser = null;
   }
+
+  // Profile
+  Future<AppUser> updateProfile({
+    required String firstName,
+    required String lastName,
+    DateTime? dateOfBirth,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final user = _currentUser;
+    if (user == null) {
+      throw const AuthException('Sesi berakhir, silakan masuk kembali.');
+    }
+    if (firstName.trim().isEmpty) {
+      throw const AuthException('Nama depan wajib diisi.');
+    }
+
+    final fullName =
+        lastName.trim().isEmpty ? firstName.trim() : '${firstName.trim()} ${lastName.trim()}';
+    final updated = user.copyWith(name: fullName, dateOfBirth: dateOfBirth);
+    _persistCurrentUser(updated);
+    return updated;
+  }
+
+  void updatePushNotifications(bool enabled) {
+    final user = _currentUser;
+    if (user == null) return;
+    _persistCurrentUser(user.copyWith(pushNotificationsEnabled: enabled));
+  }
+
+  void _persistCurrentUser(AppUser updated) {
+    _currentUser = updated;
+    final index = _demoAccounts.indexWhere(
+      (account) => account.email.toLowerCase() == updated.email.toLowerCase(),
+    );
+    if (index != -1) {
+      _demoAccounts[index] = _DemoAccount(
+        email: _demoAccounts[index].email,
+        password: _demoAccounts[index].password,
+        user: updated,
+      );
+    }
+  }
 }
 
 class _DemoAccount {

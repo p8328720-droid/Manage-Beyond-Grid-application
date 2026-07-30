@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
+import 'package:flutter_application_1/screens/user/profile/profile_tab.dart';
 import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 
@@ -18,9 +19,11 @@ class UserHomeScreen extends StatefulWidget {
 class _UserHomeScreenState extends State<UserHomeScreen> {
   int _navIndex = 0;
   bool _cloudSyncEnabled = true;
-  bool _alertEnabled = true;
 
   AppUser? get _user => AuthService.instance.currentUser;
+
+
+  bool get _alertEnabled => _user?.pushNotificationsEnabled ?? true;
 
   void _logout() {
     AuthService.instance.logout();
@@ -36,23 +39,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     );
   }
 
-  void _openProfileSheet() {
-    final user = _user;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ProfileSheet(
-        name: user?.name ?? 'Pengguna',
-        email: user?.email ?? '-',
-        roleLabel: user?.role.label ?? UserRole.pengguna.label,
-        onLogout: () {
-          Navigator.of(context).pop();
-          _logout();
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final name = _user?.name ?? 'Pengguna';
@@ -61,12 +47,17 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
+        child: _navIndex == 2
+            ? ProfileTab(onLogout: _logout)
+            : SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _HeaderBar(name: name, onTapProfile: _openProfileSheet),
+              _HeaderBar(
+                name: name,
+                onTapProfile: () => setState(() => _navIndex = 2),
+              ),
               const SizedBox(height: 22),
               const _StatusChips(),
               const SizedBox(height: 28),
@@ -85,7 +76,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 label: 'Smart Alert & Notification',
                 subtitle: 'Notifikasi kondisi penting secara real-time',
                 value: _alertEnabled,
-                onChanged: (v) => setState(() => _alertEnabled = v),
+                onChanged: (v) => setState(
+                  () => AuthService.instance.updatePushNotifications(v),
+                ),
               ),
               const SizedBox(height: 28),
               const _SectionTitle('Kelola & Pantau'),
@@ -136,10 +129,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: _navIndex,
         onSelect: (index) {
-          if (index == 2) {
-            _openProfileSheet();
-            return;
-          }
           setState(() => _navIndex = index);
           if (index == 1) _showComingSoon('Laporan');
         },
@@ -532,126 +521,6 @@ class _NavItem extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ProfileSheet extends StatelessWidget {
-  final String name;
-  final String email;
-  final String roleLabel;
-  final VoidCallback onLogout;
-
-  const _ProfileSheet({
-    required this.name,
-    required this.email,
-    required this.roleLabel,
-    required this.onLogout,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-          ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: AppColors.accent,
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 17,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      email,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              roleLabel,
-              style: const TextStyle(
-                color: AppColors.accentDim,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onLogout,
-              icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
-              label: const Text(
-                'Keluar',
-                style: TextStyle(
-                  color: AppColors.danger,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(52),
-                side: const BorderSide(color: AppColors.danger),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
