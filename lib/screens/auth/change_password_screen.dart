@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../services/auth_service.dart';
-import '../../../../../widgets/brand_widgets.dart';
-import '../../../../../widgets/mbg_text_field.dart';
-import 'login_screen.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
+import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/widgets/brand_widgets.dart';
+import 'package:flutter_application_1/widgets/mbg_text_field.dart';
+import 'package:flutter_application_1/screens/auth/login_screen.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   static const routeName = '/change-password';
@@ -13,7 +13,7 @@ class ChangePasswordScreen extends StatefulWidget {
 
   const ChangePasswordScreen({super.key, required this.email});
 
-  @override 
+  @override
   State<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
 }
 
