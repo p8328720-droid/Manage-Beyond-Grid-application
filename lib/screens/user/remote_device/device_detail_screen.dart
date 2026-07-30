@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
+import 'package:flutter_application_1/services/app_settings.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 import 'package:flutter_application_1/widgets/device_sliders.dart';
 
 class DeviceDetailScreen extends StatefulWidget {
   final SmartDevice device;
 
-  const DeviceDetailScreen({super.key, required this.device});
+  DeviceDetailScreen({super.key, required this.device});
 
   @override
   State<DeviceDetailScreen> createState() => _DeviceDetailScreenState();
@@ -19,53 +20,61 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return ListenableBuilder(
+      listenable: AppSettings.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                  ),
-                  Expanded(
-                    child: Text(
-                      _device.room,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
                       ),
+                      Expanded(
+                        child: Text(
+                          _device.room,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 48),
+                    ],
+                  ),
+                  SizedBox(height: 18),
+                  DeviceHeaderCard(
+                    icon: _device.type.icon,
+                    name: _device.name,
+                    subtitle: '1 Device',
+                    isOn: _device.isOn,
+                    onToggle: (v) {
+                      AppSettings.instance.feedback();
+                      setState(() => _device.isOn = v);
+                    },
+                  ),
+                  SizedBox(height: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: BouncingScrollPhysics(),
+                      child: _buildControls(),
                     ),
                   ),
-                  const SizedBox(width: 48),
                 ],
               ),
-              const SizedBox(height: 18),
-              DeviceHeaderCard(
-                icon: _device.type.icon,
-                name: _device.name,
-                subtitle: '1 Device',
-                isOn: _device.isOn,
-                onToggle: (v) => setState(() => _device.isOn = v),
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: _buildControls(),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -92,7 +101,7 @@ class _TvControls extends StatelessWidget {
   final SmartDevice device;
   final VoidCallback onChanged;
 
-  const _TvControls({required this.device, required this.onChanged});
+  _TvControls({required this.device, required this.onChanged});
 
   void _setChannel(int delta) {
     device.channel = (device.channel + delta).clamp(1, 999);
@@ -103,7 +112,7 @@ class _TvControls extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -112,13 +121,13 @@ class _TvControls extends StatelessWidget {
               children: [
                 Text(
                   '${device.channel}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                     fontSize: 30,
                   ),
                 ),
-                const Text(
+                Text(
                   'Channel',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
@@ -127,8 +136,8 @@ class _TvControls extends StatelessWidget {
             CircleStepButton(icon: Icons.add, onTap: () => _setChannel(1)),
           ],
         ),
-        const SizedBox(height: 32),
-        const Align(
+        SizedBox(height: 32),
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
             'Volume',
@@ -139,7 +148,7 @@ class _TvControls extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         PercentDragBar(
           value: device.level / 100,
           label: '${device.level}%',
@@ -148,7 +157,7 @@ class _TvControls extends StatelessWidget {
             onChanged();
           },
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         Row(
           children: [
             Expanded(
@@ -162,7 +171,7 @@ class _TvControls extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             Expanded(
               child: ToggleActionCard(
                 icon: Icons.cast_outlined,
@@ -185,10 +194,10 @@ class _AcControls extends StatelessWidget {
   final SmartDevice device;
   final VoidCallback onChanged;
 
-  static const int _minTemp = 16;
-  static const int _maxTemp = 30;
+  static int _minTemp = 16;
+  static int _maxTemp = 30;
 
-  const _AcControls({required this.device, required this.onChanged});
+  _AcControls({required this.device, required this.onChanged});
 
   void _setSwing(SwingMode mode) {
     device.swingMode = device.swingMode == mode ? null : mode;
@@ -197,41 +206,44 @@ class _AcControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final settings = AppSettings.instance;
     final range = (_maxTemp - _minTemp).toDouble();
     final percent = (device.temperature - _minTemp) / range;
+    final displayTemp = settings.celsiusToDisplay(device.temperature);
+    final unitLabel = settings.tempUnit == 'f' ? 'Fahrenheit' : 'Celsius';
 
     return Column(
       children: [
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         Column(
           children: [
             Text(
-              '${device.temperature}°',
-              style: const TextStyle(
+              '$displayTemp°',
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w900,
                 fontSize: 56,
                 height: 1,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Celsius',
+            SizedBox(height: 4),
+            Text(
+              unitLabel,
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         PercentDragBar(
           value: percent,
-          label: '${device.temperature}°',
+          label: '$displayTemp°',
           onChanged: (p) {
             device.temperature = (_minTemp + p * range).round();
             onChanged();
           },
         ),
-        const SizedBox(height: 24),
-        const Align(
+        SizedBox(height: 24),
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
             'Swing',
@@ -242,7 +254,7 @@ class _AcControls extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Row(
           children: [
             SwingOptionCard(
@@ -251,7 +263,7 @@ class _AcControls extends StatelessWidget {
               selected: device.swingMode == SwingMode.vertical,
               onTap: () => _setSwing(SwingMode.vertical),
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: 14),
             SwingOptionCard(
               icon: Icons.swap_horiz_rounded,
               label: 'Horizontal',
@@ -269,13 +281,13 @@ class _LampControls extends StatelessWidget {
   final SmartDevice device;
   final VoidCallback onChanged;
 
-  const _LampControls({required this.device, required this.onChanged});
+  _LampControls({required this.device, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
         Center(
           child: SizedBox(
             height: 340,
@@ -299,7 +311,7 @@ class _GenericLevelControls extends StatelessWidget {
   final SmartDevice device;
   final VoidCallback onChanged;
 
-  const _GenericLevelControls({required this.device, required this.onChanged});
+  _GenericLevelControls({required this.device, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -311,19 +323,19 @@ class _GenericLevelControls extends StatelessWidget {
 
     return Column(
       children: [
-        const SizedBox(height: 32),
+        SizedBox(height: 32),
         Align(
           alignment: Alignment.centerLeft,
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 14.5,
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         PercentDragBar(
           value: device.level / 100,
           label: '${device.level}%',
