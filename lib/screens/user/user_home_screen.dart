@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
+import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -107,7 +108,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     icon: Icons.settings_remote_outlined,
                     title: 'Remote Device Control',
                     subtitle: 'Kontrol perangkat dari mana saja',
-                    onTap: () => _showComingSoon('Remote Device Control'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RemoteDeviceControlScreen(),
+                      ),
+                    ),
                   ),
                   _FeatureCard(
                     icon: Icons.insights_outlined,
