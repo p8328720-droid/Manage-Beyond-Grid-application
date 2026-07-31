@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
 import 'package:flutter_application_1/services/device_service.dart';
+import 'package:flutter_application_1/services/room_service.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 
@@ -62,12 +63,13 @@ class _AddDeviceSheetState extends State<AddDeviceSheet> {
       type: _selectedType!,
     );
     DeviceService.instance.addDevice(device);
+    RoomService.instance.ensureRoom(device.room);
     Navigator.of(context).pop(device);
   }
 
   @override
   Widget build(BuildContext context) {
-    final rooms = DeviceService.instance.rooms;
+    final rooms = RoomService.instance.roomNames;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
