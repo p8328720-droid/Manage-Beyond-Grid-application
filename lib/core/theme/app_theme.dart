@@ -3,28 +3,23 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Canvas
   static const Color background = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceElevated = Color(0xFFF1F2F4);
   static const Color border = Color(0xFFE5E7EB);
 
-  // Splash header only
   static const Color night = Color(0xFF101012);
   static const Color nightSoft = Color(0xFF1B1B1E);
   static const Color nightSofter = Color(0xFF262629);
 
-  // Brand
   static const Color accent = Color(0xFF2FD9A0);
   static const Color accentDim = Color(0xFF1FA980);
   static const Color link = Color(0xFF3D4FCB);
 
-  // Status
   static const Color warning = Color(0xFFFFB020);
   static const Color danger = Color(0xFFE5484D);
   static const Color success = Color(0xFF2FD9A0);
 
-  // Text
   static const Color textPrimary = Color(0xFF111111);
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color textMuted = Color(0xFF9CA3AF);

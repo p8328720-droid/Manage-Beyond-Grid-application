@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
 import 'package:flutter_application_1/services/device_service.dart';
+import 'package:flutter_application_1/services/room_service.dart';
+import 'package:flutter_application_1/services/usage_analytics_service.dart';
 import 'package:flutter_application_1/screens/user/remote_device/add_device_sheet.dart';
+import 'package:flutter_application_1/screens/user/remote_device/add_room_flow.dart';
 import 'package:flutter_application_1/screens/user/remote_device/device_detail_screen.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 
@@ -17,6 +20,14 @@ class RoomDevicesScreen extends StatefulWidget {
 }
 
 class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
+  late String _roomName;
+
+  @override
+  void initState() {
+    super.initState();
+    _roomName = widget.room;
+  }
+
   Future<void> _openDevice(SmartDevice device) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => DeviceDetailScreen(device: device)),
@@ -25,13 +36,26 @@ class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
   }
 
   Future<void> _addDevice() async {
-    final device = await showAddDeviceSheet(context, fixedRoom: widget.room);
+    final device = await showAddDeviceSheet(context, fixedRoom: _roomName);
     if (device != null && mounted) setState(() {});
+  }
+
+  Future<void> _manageRoom() async {
+    final room = RoomService.instance.byName(_roomName);
+    if (room == null) return;
+    await showManageRoomSheet(context, room);
+    if (!mounted) return;
+    final stillExists = RoomService.instance.byName(room.name) != null;
+    if (!stillExists) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() => _roomName = room.name);
   }
 
   @override
   Widget build(BuildContext context) {
-    final devices = DeviceService.instance.devicesInRoom(widget.room);
+    final devices = DeviceService.instance.devicesInRoom(_roomName);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -49,7 +73,7 @@ class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
                   ),
                   Expanded(
                     child: Text(
-                      widget.room,
+                      _roomName,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: AppColors.textPrimary,
@@ -58,7 +82,10 @@ class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    onPressed: _manageRoom,
+                    icon: const Icon(Icons.more_vert_rounded, size: 22),
+                  ),
                 ],
               ),
               const SizedBox(height: 18),
@@ -80,7 +107,10 @@ class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
                             name: device.name,
                             subtitle: '1 Device',
                             isOn: device.isOn,
-                            onToggle: (v) => setState(() => device.isOn = v),
+                            onToggle: (v) {
+                              setState(() => device.isOn = v);
+                              UsageAnalyticsService.instance.recordToggle(device, v);
+                            },
                             onTap: () => _openDevice(device),
                           );
                         },

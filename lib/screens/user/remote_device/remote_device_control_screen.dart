@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_application_1/core/theme/app_theme.dart';
-import 'package:flutter_application_1/services/device_service.dart';
+import 'package:flutter_application_1/models/room.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
+import 'package:flutter_application_1/services/device_service.dart';
+import 'package:flutter_application_1/services/room_service.dart';
 import 'package:flutter_application_1/screens/user/remote_device/add_device_sheet.dart';
+import 'package:flutter_application_1/screens/user/remote_device/add_room_flow.dart';
 import 'package:flutter_application_1/screens/user/remote_device/room_devices_screen.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 
@@ -31,9 +34,19 @@ class _RemoteDeviceControlScreenState
     if (device != null && mounted) setState(() {});
   }
 
+  Future<void> _addRoom() async {
+    final room = await showAddRoomFlow(context);
+    if (room != null && mounted) setState(() {});
+  }
+
+  Future<void> _manageRoom(Room room) async {
+    await showManageRoomSheet(context, room);
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final rooms = DeviceService.instance.rooms;
+    final rooms = RoomService.instance.rooms;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -60,7 +73,10 @@ class _RemoteDeviceControlScreenState
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  IconButton(
+                    onPressed: _addRoom,
+                    icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
+                  ),
                 ],
               ),
               const SizedBox(height: 6),
@@ -73,7 +89,7 @@ class _RemoteDeviceControlScreenState
                 child: rooms.isEmpty
                     ? const Center(
                         child: Text(
-                          'Belum ada ruangan atau perangkat.\nTambahkan perangkat pertamamu.',
+                          'Belum ada ruangan.\nTambahkan ruangan pertamamu.',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: AppColors.textSecondary),
                         ),
@@ -83,15 +99,19 @@ class _RemoteDeviceControlScreenState
                         separatorBuilder: (_, __) => const SizedBox(height: 14),
                         itemBuilder: (context, index) {
                           final room = rooms[index];
-                          final devices = DeviceService.instance.devicesInRoom(room);
+                          final devices =
+                              DeviceService.instance.devicesInRoom(room.name);
                           return RoomSummaryCard(
-                            room: room,
+                            room: room.name,
+                            backgroundGradient: room.background.gradient,
+                            backgroundIcon: room.background.icon,
                             deviceCount: devices.length,
-                            activeCount:
-                                DeviceService.instance.activeCountInRoom(room),
+                            activeCount: DeviceService.instance
+                                .activeCountInRoom(room.name),
                             previewIcons:
                                 devices.map((d) => d.type.icon).toList(),
-                            onTap: () => _openRoom(room),
+                            onTap: () => _openRoom(room.name),
+                            onManage: () => _manageRoom(room),
                           );
                         },
                       ),
