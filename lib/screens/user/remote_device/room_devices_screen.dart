@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
 import 'package:flutter_application_1/services/device_service.dart';
+import 'package:flutter_application_1/services/usage_analytics_service.dart';
 import 'package:flutter_application_1/screens/user/remote_device/add_device_sheet.dart';
 import 'package:flutter_application_1/screens/user/remote_device/device_detail_screen.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
@@ -80,7 +81,10 @@ class _RoomDevicesScreenState extends State<RoomDevicesScreen> {
                             name: device.name,
                             subtitle: '1 Device',
                             isOn: device.isOn,
-                            onToggle: (v) => setState(() => device.isOn = v),
+                            onToggle: (v) {
+                              setState(() => device.isOn = v);
+                              UsageAnalyticsService.instance.recordToggle(device, v);
+                            },
                             onTap: () => _openDevice(device),
                           );
                         },

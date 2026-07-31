@@ -5,6 +5,7 @@ import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/user/profile/profile_tab.dart';
 import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
+import 'package:flutter_application_1/screens/user/reports/reports_tab.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -49,7 +50,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         bottom: false,
         child: _navIndex == 2
             ? ProfileTab(onLogout: _logout)
-            : SingleChildScrollView(
+            : _navIndex == 1
+                ? const ReportsTab()
+                : SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +120,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     icon: Icons.bar_chart_outlined,
                     title: 'Analytics & Reports',
                     subtitle: 'Grafik energi & riwayat aktivitas',
-                    onTap: () => _showComingSoon('Analytics & Reports'),
+                    onTap: () => setState(() => _navIndex = 1),
                   ),
                 ],
               ),
@@ -128,10 +131,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
       ),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: _navIndex,
-        onSelect: (index) {
-          setState(() => _navIndex = index);
-          if (index == 1) _showComingSoon('Laporan');
-        },
+        onSelect: (index) => setState(() => _navIndex = index),
       ),
     );
   }
