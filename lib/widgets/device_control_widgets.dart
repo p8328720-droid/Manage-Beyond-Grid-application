@@ -221,18 +221,24 @@ class SwingOptionCard extends StatelessWidget {
 
 class RoomSummaryCard extends StatelessWidget {
   final String room;
+  final List<Color> backgroundGradient;
+  final IconData backgroundIcon;
   final int deviceCount;
   final int activeCount;
   final List<IconData> previewIcons;
   final VoidCallback onTap;
+  final VoidCallback onManage;
 
   const RoomSummaryCard({
     super.key,
     required this.room,
+    required this.backgroundGradient,
+    required this.backgroundIcon,
     required this.deviceCount,
     required this.activeCount,
     required this.previewIcons,
     required this.onTap,
+    required this.onManage,
   });
 
   @override
@@ -240,63 +246,104 @@ class RoomSummaryCard extends StatelessWidget {
     return Material(
       color: AppColors.surfaceElevated,
       borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      room,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16.5,
-                      ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                Container(
+                  height: 130,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: backgroundGradient,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$deviceCount perangkat • $activeCount aktif',
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        for (final icon in previewIcons.take(4))
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(icon, size: 16, color: AppColors.accentDim),
-                          ),
-                        if (previewIcons.isEmpty)
-                          const Text(
-                            'Belum ada perangkat',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(backgroundIcon, size: 34, color: Colors.white24),
                 ),
+                Container(
+                  height: 130,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black.withValues(alpha: 0.55)],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 16,
+                  bottom: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        room,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16.5,
+                        ),
+                      ),
+                      Text(
+                        '$activeCount/$deviceCount is on',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      onPressed: onManage,
+                      icon: const Icon(Icons.more_vert_rounded, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  for (final icon in previewIcons.take(4))
+                    Container(
+                      margin: const EdgeInsets.only(right: 8),
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, size: 16, color: AppColors.accentDim),
+                    ),
+                  if (previewIcons.isEmpty)
+                    const Text(
+                      'Belum ada perangkat',
+                      style: TextStyle(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  const Spacer(),
+                  const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+                ],
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

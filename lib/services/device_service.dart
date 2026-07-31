@@ -32,6 +32,10 @@ class DeviceService {
     _devices.removeWhere((d) => d.id == id);
   }
 
+  void removeDevicesInRoom(String room) {
+    _devices.removeWhere((d) => d.room == room);
+  }
+
   String generateId() => 'dev-${DateTime.now().microsecondsSinceEpoch}';
 
   static List<SmartDevice> _seedDevices() {
