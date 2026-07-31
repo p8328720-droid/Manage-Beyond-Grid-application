@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/services/system_config_service.dart';
 import 'package:flutter_application_1/widgets/brand_widgets.dart';
 import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 import 'package:flutter_application_1/screens/admin/admin_home_screen.dart';
@@ -66,6 +67,15 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
+      if (SystemConfigService.instance.maintenanceMode &&
+          user.role != UserRole.administrator) {
+        AuthService.instance.logout();
+        setState(() {
+          _errorMessage =
+              'Sistem sedang dalam mode pemeliharaan. Hanya administrator yang dapat masuk.';
+        });
+        return;
+      }
       _goToRoleHome(user);
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);

@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/services/system_config_service.dart';
 import 'package:flutter_application_1/widgets/brand_widgets.dart';
 import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 import 'package:flutter_application_1/screens/user/user_home_screen.dart';
 
-/// "Sign Up" screen — the account-creation use case that feeds new
-/// Pengguna (End User) accounts into the system. New sign-ups always land
-/// in the Pengguna role, since Administrator and Teknisi accounts are
-/// provisioned separately (see "Kelola Pengguna" in the use-case diagram).
+
 class RegisterScreen extends StatefulWidget {
   static const routeName = '/register';
 
@@ -41,6 +39,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _handleCreateAccount() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!SystemConfigService.instance.allowRegistration) {
+      setState(() {
+        _errorMessage = 'Pendaftaran akun baru sedang ditutup oleh administrator.';
+      });
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;

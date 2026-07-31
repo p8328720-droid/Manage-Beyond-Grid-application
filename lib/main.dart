@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
 import 'services/app_settings.dart';
+import 'services/system_config_service.dart';
 import 'screens/admin/admin_home_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -12,6 +13,7 @@ import 'screens/user/user_home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppSettings.instance.load();
+  await SystemConfigService.instance.load();
   runApp(const MbgApp());
 }
 

@@ -5,7 +5,7 @@
 
 Keberadaan **Internet of Things (IoT)** ini membuat penggunaan smart device makin marak, baik itu untuk rumah, perkuliahan maupun kantor. Namun, manajemen terhadap penggunaan perangkat ini menjadi masalah, dimana pengguna mesti memanfaatkan aplikasi lain untuk setiap perangkat. Sehingga, proses monitoring akan menjadi tidak efektif dan sulit mendapatkan gambaran menyeluruh mengenai kondisi seluruh perangkat.
 
-Namun demikian, permintaan akan monitoring real-time dan pengambilan keputusan cepat semakin tinggi. Ironisnya, hampir semua aplikasi IoT yang ada hanya menawarkan fungsi dasar monitoring dan kontrol tanpa menyediakan analisis untuk memastikan pengguna bisa mengantisipasi masalah tersebut.
+Namun, permintaan akan monitoring real-time dan pengambilan keputusan cepat semakin tinggi. Ironisnya, hampir semua aplikasi IoT yang ada hanya menawarkan fungsi dasar monitoring dan kontrol tanpa menyediakan analisis untuk memastikan pengguna bisa mengantisipasi masalah tersebut.
 
 Berangkat dari kesempatan tersebut, **MBG (Manage Beyond Grid)** hadir sebagai solusi dalam bentuk platform manajemen perangkat IoT yang memadukan **Cloud Computing** dan **Artificial Intelligence (AI)** pada satu aplikasi mobile. MBG memudahkan pengguna untuk melakukan monitoring dan kontrol atas perangkat-perangkat berdasarkan cloud dan memanfaatkan kekuatan dari AI untuk mendeteksi ancaman, memprediksi potensi gangguan, serta memberikan rekomendasi yang membantu pengguna mengelola perangkat dengan lebih efisien dan proaktif.
 
