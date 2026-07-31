@@ -30,6 +30,8 @@ class AppUser {
   final UserRole role;
   final DateTime? dateOfBirth;
   final bool pushNotificationsEnabled;
+  final bool isActive;
+  final DateTime? createdAt;
 
   const AppUser({
     required this.id,
@@ -38,6 +40,8 @@ class AppUser {
     required this.role,
     this.dateOfBirth,
     this.pushNotificationsEnabled = true,
+    this.isActive = true,
+    this.createdAt,
   });
 
   // Profile details screen splits the full name into first/last name.
@@ -59,17 +63,21 @@ class AppUser {
 
   AppUser copyWith({
     String? name,
+    UserRole? role,
     DateTime? dateOfBirth,
     bool? pushNotificationsEnabled,
+    bool? isActive,
   }) {
     return AppUser(
       id: id,
       name: name ?? this.name,
       email: email,
-      role: role,
+      role: role ?? this.role,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       pushNotificationsEnabled:
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
     );
   }
 }

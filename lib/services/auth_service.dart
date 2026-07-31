@@ -1,4 +1,5 @@
 import '../models/app_user.dart';
+import 'audit_log_service.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -18,31 +19,34 @@ class AuthService {
     _DemoAccount(
       email: 'admin@mbg.io',
       password: 'admin123',
-      user: const AppUser(
+      user: AppUser(
         id: 'u-001',
         name: 'Admin MBG',
         email: 'admin@mbg.io',
         role: UserRole.administrator,
+        createdAt: DateTime.now().subtract(const Duration(days: 120)),
       ),
     ),
     _DemoAccount(
       email: 'user@mbg.io',
       password: 'user123',
-      user: const AppUser(
+      user: AppUser(
         id: 'u-002',
         name: 'Pengguna MBG',
         email: 'user@mbg.io',
         role: UserRole.pengguna,
+        createdAt: DateTime.now().subtract(const Duration(days: 60)),
       ),
     ),
     _DemoAccount(
       email: 'teknisi@mbg.io',
       password: 'teknisi123',
-      user: const AppUser(
+      user: AppUser(
         id: 'u-003',
         name: 'Teknisi MBG',
         email: 'teknisi@mbg.io',
         role: UserRole.teknisi,
+        createdAt: DateTime.now().subtract(const Duration(days: 45)),
       ),
     ),
   ];
@@ -100,7 +104,20 @@ class AuthService {
       throw const AuthException('Email atau kata sandi salah.');
     }
 
-    _currentUser = matches.first.user;
+    final matchedUser = matches.first.user;
+    if (!matchedUser.isActive) {
+      throw const AuthException(
+        'Akun ini telah dinonaktifkan oleh administrator.',
+      );
+    }
+
+    _currentUser = matchedUser;
+    AuditLogService.instance.log(
+      actor: matchedUser.name,
+      category: AuditCategory.autentikasi,
+      action: 'Masuk ke aplikasi',
+      detail: '${matchedUser.email} (${matchedUser.role.label}) berhasil masuk.',
+    );
     return _currentUser!;
   }
 
@@ -292,6 +309,136 @@ class AuthService {
         user: updated,
       );
     }
+  }
+
+  List<AppUser> get allUsers =>
+      _demoAccounts.map((a) => a.user).toList(growable: false);
+
+  String get _adminActorName => _currentUser?.name ?? 'Administrator';
+
+  AppUser adminCreateUser({
+    required String name,
+    required String email,
+    required String password,
+    required UserRole role,
+  }) {
+    final trimmedEmail = email.trim().toLowerCase();
+    if (name.trim().isEmpty || trimmedEmail.isEmpty || password.length < 6) {
+      throw const AuthException(
+        'Nama, email wajib diisi dan kata sandi minimal 6 karakter.',
+      );
+    }
+    final exists = _demoAccounts.any(
+      (a) => a.email.toLowerCase() == trimmedEmail,
+    );
+    if (exists) {
+      throw const AuthException('Email sudah terdaftar.');
+    }
+
+    final newUser = AppUser(
+      id: 'u-${DateTime.now().millisecondsSinceEpoch}',
+      name: name.trim(),
+      email: trimmedEmail,
+      role: role,
+      createdAt: DateTime.now(),
+    );
+    _demoAccounts.add(
+      _DemoAccount(email: trimmedEmail, password: password, user: newUser),
+    );
+
+    AuditLogService.instance.log(
+      actor: _adminActorName,
+      category: AuditCategory.pengguna,
+      action: 'Menambahkan pengguna',
+      detail: '${newUser.name} (${newUser.email}) sebagai ${role.label}.',
+    );
+    return newUser;
+  }
+
+  void adminUpdateUserRole({required String userId, required UserRole role}) {
+    final index = _demoAccounts.indexWhere((a) => a.user.id == userId);
+    if (index == -1) throw const AuthException('Pengguna tidak ditemukan.');
+
+    final current = _demoAccounts[index].user;
+    final updated = current.copyWith(role: role);
+    _demoAccounts[index] = _DemoAccount(
+      email: _demoAccounts[index].email,
+      password: _demoAccounts[index].password,
+      user: updated,
+    );
+    if (_currentUser?.id == userId) _currentUser = updated;
+
+    AuditLogService.instance.log(
+      actor: _adminActorName,
+      category: AuditCategory.pengguna,
+      action: 'Mengubah peran pengguna',
+      detail: '${updated.name} menjadi ${role.label}.',
+    );
+  }
+
+  void adminSetUserActive({required String userId, required bool active}) {
+    if (_currentUser?.id == userId) {
+      throw const AuthException('Tidak dapat menonaktifkan akun sendiri.');
+    }
+    final index = _demoAccounts.indexWhere((a) => a.user.id == userId);
+    if (index == -1) throw const AuthException('Pengguna tidak ditemukan.');
+
+    final current = _demoAccounts[index].user;
+    final updated = current.copyWith(isActive: active);
+    _demoAccounts[index] = _DemoAccount(
+      email: _demoAccounts[index].email,
+      password: _demoAccounts[index].password,
+      user: updated,
+    );
+
+    AuditLogService.instance.log(
+      actor: _adminActorName,
+      category: AuditCategory.pengguna,
+      action: active ? 'Mengaktifkan pengguna' : 'Menonaktifkan pengguna',
+      detail: '${updated.name} (${updated.email}).',
+    );
+  }
+
+  void adminDeleteUser(String userId) {
+    if (_currentUser?.id == userId) {
+      throw const AuthException('Tidak dapat menghapus akun sendiri.');
+    }
+    final index = _demoAccounts.indexWhere((a) => a.user.id == userId);
+    if (index == -1) throw const AuthException('Pengguna tidak ditemukan.');
+
+    final removed = _demoAccounts[index].user;
+    _demoAccounts.removeAt(index);
+
+    AuditLogService.instance.log(
+      actor: _adminActorName,
+      category: AuditCategory.pengguna,
+      action: 'Menghapus pengguna',
+      detail: '${removed.name} (${removed.email}).',
+    );
+  }
+
+  void adminResetPassword({
+    required String userId,
+    required String newPassword,
+  }) {
+    if (newPassword.length < 6) {
+      throw const AuthException('Kata sandi baru minimal 6 karakter.');
+    }
+    final index = _demoAccounts.indexWhere((a) => a.user.id == userId);
+    if (index == -1) throw const AuthException('Pengguna tidak ditemukan.');
+
+    _demoAccounts[index] = _DemoAccount(
+      email: _demoAccounts[index].email,
+      password: newPassword,
+      user: _demoAccounts[index].user,
+    );
+
+    AuditLogService.instance.log(
+      actor: _adminActorName,
+      category: AuditCategory.pengguna,
+      action: 'Mereset kata sandi pengguna',
+      detail: '${_demoAccounts[index].user.name} (${_demoAccounts[index].user.email}).',
+    );
   }
 }
 

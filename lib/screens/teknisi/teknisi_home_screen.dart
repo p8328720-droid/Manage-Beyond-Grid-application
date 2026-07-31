@@ -15,7 +15,6 @@ class TeknisiHomeScreen extends StatelessWidget {
       roleLabel: 'Teknisi / Maintenance',
       welcomeName: AuthService.instance.currentUser?.name ?? 'Teknisi',
       menuItems: const [
-        RoleMenuItem(icon: Icons.monitor_heart_outlined, label: 'Monitoring Perangkat'),
         RoleMenuItem(icon: Icons.build_outlined, label: 'Jadwal Maintenance'),
         RoleMenuItem(icon: Icons.report_gmailerrorred_outlined, label: 'Laporan Gangguan'),
         RoleMenuItem(icon: Icons.sensors_outlined, label: 'Kalibrasi Sensor'),
