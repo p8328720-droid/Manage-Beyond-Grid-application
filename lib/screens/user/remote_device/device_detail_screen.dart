@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
 import 'package:flutter_application_1/services/app_settings.dart';
+import 'package:flutter_application_1/services/usage_analytics_service.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 import 'package:flutter_application_1/widgets/device_sliders.dart';
 
@@ -60,6 +61,7 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                     onToggle: (v) {
                       AppSettings.instance.feedback();
                       setState(() => _device.isOn = v);
+                      UsageAnalyticsService.instance.recordToggle(_device, v);
                     },
                   ),
                   SizedBox(height: 12),
