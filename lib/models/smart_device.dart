@@ -40,6 +40,10 @@ class SmartDevice {
   int temperature;
   SwingMode? swingMode;
 
+  bool isOnline;
+  int signalStrength;
+  DateTime lastSeen;
+
   SmartDevice({
     required this.id,
     required this.name,
@@ -52,5 +56,28 @@ class SmartDevice {
     this.casting = false,
     this.temperature = 24,
     this.swingMode,
-  });
+    this.isOnline = true,
+    this.signalStrength = 80,
+    DateTime? lastSeen,
+  }) : lastSeen = lastSeen ?? DateTime.now();
+}
+
+enum SignalQuality { excellent, good, weak }
+
+extension SmartDeviceStatusX on SmartDevice {
+  SignalQuality get signalQuality {
+    if (signalStrength >= 70) return SignalQuality.excellent;
+    if (signalStrength >= 35) return SignalQuality.good;
+    return SignalQuality.weak;
+  }
+
+  bool get needsAttention => !isOnline || signalQuality == SignalQuality.weak;
+
+  String get lastSeenLabel {
+    if (isOnline) return 'Online';
+    final diff = DateTime.now().difference(lastSeen);
+    if (diff.inSeconds < 60) return 'Terputus ${diff.inSeconds} dtk lalu';
+    if (diff.inMinutes < 60) return 'Terputus ${diff.inMinutes} mnt lalu';
+    return 'Terputus ${diff.inHours} jam lalu';
+  }
 }

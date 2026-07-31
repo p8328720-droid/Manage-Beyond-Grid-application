@@ -10,12 +10,10 @@ import 'package:flutter_application_1/screens/user/profile/settings_view.dart';
 
 enum _ProfilePage { main, details, notifications, settings }
 
-// WhatsApp number for Support, in international format without symbols.
+
 const String _supportWhatsAppNumber = '6285717458151';
 
-/// Hosts the Profile hub and its sub-pages (Profile details, Push
-/// Notifications, Settings) as an internal stack, so the bottom nav bar
-/// owned by [UserHomeScreen] stays visible the whole time.
+
 class ProfileTab extends StatefulWidget {
   final VoidCallback onLogout;
 
@@ -73,7 +71,7 @@ class _ProfileTabState extends State<ProfileTab> {
   }
 }
 
-// Profile hub: avatar, identity, and the menu list.
+
 class _ProfileMainView extends StatelessWidget {
   final String name;
   final String email;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
+import 'package:flutter_application_1/screens/user/dashboard/smart_dashboard_screen.dart';
 import 'package:flutter_application_1/screens/user/profile/profile_tab.dart';
 import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
 import 'package:flutter_application_1/screens/user/reports/reports_tab.dart';
@@ -98,7 +99,11 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     icon: Icons.dashboard_outlined,
                     title: 'Smart Dashboard',
                     subtitle: 'Semua status perangkat, satu layar',
-                    onTap: () => _showComingSoon('Smart Dashboard'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SmartDashboardScreen(),
+                      ),
+                    ),
                   ),
                   _FeatureCard(
                     icon: Icons.settings_remote_outlined,

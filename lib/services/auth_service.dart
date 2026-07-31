@@ -250,9 +250,6 @@ class AuthService {
     _persistCurrentUser(user.copyWith(pushNotificationsEnabled: enabled));
   }
 
-  // Settings — change password while already logged in. Unlike
-  // [resetPassword] (forgot-password flow), this requires the current
-  // password to match before it's allowed to change.
   Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
