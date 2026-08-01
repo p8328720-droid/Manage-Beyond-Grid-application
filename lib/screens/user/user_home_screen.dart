@@ -4,9 +4,11 @@ import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/user/dashboard/smart_dashboard_screen.dart';
+import 'package:flutter_application_1/screens/user/insights/ai_insights_screen.dart';
 import 'package:flutter_application_1/screens/user/profile/profile_tab.dart';
 import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
 import 'package:flutter_application_1/screens/user/reports/reports_tab.dart';
+import 'package:flutter_application_1/services/ai_insight_service.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -32,12 +34,6 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
     Navigator.of(context).pushNamedAndRemoveUntil(
       LoginScreen.routeName,
       (_) => false,
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$feature — segera hadir')),
     );
   }
 
@@ -115,11 +111,23 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                       ),
                     ),
                   ),
-                  _FeatureCard(
-                    icon: Icons.insights_outlined,
-                    title: 'AI Smart Insights',
-                    subtitle: 'Deteksi & prediksi gangguan otomatis',
-                    onTap: () => _showComingSoon('AI Smart Insights'),
+                  ListenableBuilder(
+                    listenable: AiInsightService.instance,
+                    builder: (context, _) {
+                      final alerts = AiInsightService.instance.criticalCount +
+                          AiInsightService.instance.warningCount;
+                      return _FeatureCard(
+                        icon: Icons.insights_outlined,
+                        title: 'AI Smart Insights',
+                        subtitle: 'Deteksi & prediksi gangguan otomatis',
+                        badgeCount: alerts,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AiInsightsScreen(),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   _FeatureCard(
                     icon: Icons.bar_chart_outlined,
@@ -379,12 +387,14 @@ class _FeatureCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final int badgeCount;
 
   const _FeatureCard({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   @override
@@ -400,14 +410,36 @@ class _FeatureCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppColors.accentDim, size: 22),
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: AppColors.accentDim, size: 22),
+                  ),
+                  if (badgeCount > 0) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               const Spacer(),
               Text(
