@@ -103,6 +103,7 @@ class _RemoteDeviceControlScreenState
                               DeviceService.instance.devicesInRoom(room.name);
                           return RoomSummaryCard(
                             room: room.name,
+                            backgroundImage: room.background.assetPath,
                             backgroundGradient: room.background.gradient,
                             backgroundIcon: room.background.icon,
                             deviceCount: devices.length,

@@ -8,6 +8,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/teknisi/teknisi_home_screen.dart';
+import 'screens/user/banner_preview_screen.dart';
 import 'screens/user/user_home_screen.dart';
 
 void main() async {
@@ -45,6 +46,7 @@ class MbgApp extends StatelessWidget {
             RegisterScreen.routeName: (_) => RegisterScreen(),
             AdminHomeScreen.routeName: (_) => const AdminHomeScreen(),
             UserHomeScreen.routeName: (_) => UserHomeScreen(),
+            BannerPreviewScreen.routeName: (_) => const BannerPreviewScreen(),
             TeknisiHomeScreen.routeName: (_) => const TeknisiHomeScreen(),
           },
         );
