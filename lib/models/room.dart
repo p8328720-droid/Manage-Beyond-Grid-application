@@ -34,6 +34,15 @@ enum RoomBackground {
         RoomBackground.minimalStudio => const [Color(0xFFBFC4C9), Color(0xFF3A3F44)],
         RoomBackground.creativeDesk => const [Color(0xFFE0A63A), Color(0xFF2B2110)],
       };
+
+  String get assetPath => switch (this) {
+        RoomBackground.livingRoom => 'assets/images/living room.png',
+        RoomBackground.bedroom => 'assets/images/bed room.png',
+        RoomBackground.lounge => 'assets/images/launge.png',
+        RoomBackground.sunsetLounge => 'assets/images/susnset launge.png',
+        RoomBackground.minimalStudio => 'assets/images/minimalist studio.png',
+        RoomBackground.creativeDesk => 'assets/images/creative desk.png',
+      };
 }
 
 class Room {

@@ -76,6 +76,8 @@ class _SmartDashboardScreenState extends State<SmartDashboardScreen> {
                 children: [
                   _DashboardHeader(onBack: () => Navigator.of(context).pop()),
                   const SizedBox(height: 18),
+                  const _DashboardBanner(),
+                  const SizedBox(height: 18),
                   _LiveSummaryGrid(
                     online: service.onlineCount,
                     total: allDevices.length,
@@ -239,6 +241,64 @@ class _LivePulseState extends State<_LivePulse>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DashboardBanner extends StatelessWidget {
+  const _DashboardBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset(
+              'assets/images/living_room.png',
+              width: double.infinity,
+              height: 158,
+              fit: BoxFit.cover,
+            ),
+            Container(
+              width: double.infinity,
+              height: 158,
+              color: Colors.black.withOpacity(0.32),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'Room Monitoring',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Text(
+                    'Pantau kondisi kamar dan perangkat cerdas dengan cepat.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

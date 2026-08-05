@@ -221,6 +221,7 @@ class SwingOptionCard extends StatelessWidget {
 
 class RoomSummaryCard extends StatelessWidget {
   final String room;
+  final String backgroundImage;
   final List<Color> backgroundGradient;
   final IconData backgroundIcon;
   final int deviceCount;
@@ -232,6 +233,7 @@ class RoomSummaryCard extends StatelessWidget {
   const RoomSummaryCard({
     super.key,
     required this.room,
+    required this.backgroundImage,
     required this.backgroundGradient,
     required this.backgroundIcon,
     required this.deviceCount,
@@ -258,14 +260,27 @@ class RoomSummaryCard extends StatelessWidget {
                   height: 130,
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: backgroundGradient,
+                    image: DecorationImage(
+                      image: AssetImage(backgroundImage),
+                      fit: BoxFit.cover,
                     ),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(backgroundIcon, size: 34, color: Colors.white24),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          backgroundGradient.first.withOpacity(0.45),
+                          backgroundGradient.last.withOpacity(0.45),
+                        ],
+                      ),
+                    ),
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: Icon(backgroundIcon, size: 34, color: Colors.white70),
+                    ),
+                  ),
                 ),
                 Container(
                   height: 130,

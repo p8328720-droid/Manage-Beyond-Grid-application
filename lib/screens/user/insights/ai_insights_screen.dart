@@ -69,6 +69,8 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  const _InsightsHeroSection(),
+                  const SizedBox(height: 20),
                   _HealthScoreCard(
                     score: service.systemHealthScore,
                     criticalCount: service.criticalCount,
@@ -165,6 +167,51 @@ class _AiInsightsScreenState extends State<AiInsightsScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+class _InsightsHeroSection extends StatelessWidget {
+  const _InsightsHeroSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/living_room.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.black45,
+            BlendMode.darken,
+          ),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            'Insight Room Background',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Gambar ruangan sebagai latar memberikan konteks visual untuk insight perangkat.',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }

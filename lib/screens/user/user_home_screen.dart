@@ -7,6 +7,7 @@ import 'package:flutter_application_1/screens/user/dashboard/smart_dashboard_scr
 import 'package:flutter_application_1/screens/user/insights/ai_insights_screen.dart';
 import 'package:flutter_application_1/screens/user/profile/profile_tab.dart';
 import 'package:flutter_application_1/screens/user/remote_device/remote_device_control_screen.dart';
+import 'package:flutter_application_1/screens/user/banner_preview_screen.dart';
 import 'package:flutter_application_1/screens/user/reports/reports_tab.dart';
 import 'package:flutter_application_1/services/ai_insight_service.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
@@ -50,9 +51,9 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             : _navIndex == 1
                 ? const ReportsTab()
                 : SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _HeaderBar(
                 name: name,
@@ -128,6 +129,14 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                         ),
                       );
                     },
+                  ),
+                  _FeatureCard(
+                    icon: Icons.photo_library_outlined,
+                    title: 'Banner Preview',
+                    subtitle: 'Lihat semua asset ruangan yang tersedia',
+                    onTap: () => Navigator.of(context).pushNamed(
+                      BannerPreviewScreen.routeName,
+                    ),
                   ),
                   _FeatureCard(
                     icon: Icons.bar_chart_outlined,
