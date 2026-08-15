@@ -12,8 +12,62 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  AuthService._internal();
+  AuthService._internal() {
+    _initSupabaseListener();
+  }
   static final AuthService instance = AuthService._internal();
+
+  // Subscribe to Supabase auth state when initialized
+  void _initSupabaseListener() {
+    if (!SupabaseService.isInitialized) return;
+
+    try {
+      // populate initial session
+      final supaUser = Supabase.instance.client.auth.currentUser;
+      if (supaUser != null) {
+        _loadUserFromSupabaseUser(supaUser);
+      }
+
+      // listen to auth changes
+      Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+        final user = event.session?.user;
+        if (user != null) {
+          _loadUserFromSupabaseUser(user);
+        } else {
+          _currentUser = null;
+        }
+      });
+    } catch (_) {
+      // ignore if Supabase not ready
+    }
+  }
+
+  Future<void> _loadUserFromSupabaseUser(User user) async {
+    try {
+      final profileRes = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      Map<String, dynamic>? profile;
+      if (profileRes is Map<String, dynamic>) profile = profileRes;
+
+      final appUser = AppUser(
+        id: user.id,
+        name: profile?['name'] ?? user.email ?? 'Pengguna',
+        email: user.email ?? '',
+        role: profile != null ? UserRoleX.fromApiValue(profile['role'] ?? '') : UserRole.pengguna,
+        isActive: profile?['is_active'] ?? true,
+        createdAt: profile != null && profile['created_at'] != null
+            ? DateTime.tryParse(profile['created_at'])
+            : null,
+      );
+      _currentUser = appUser;
+    } catch (e) {
+      // ignore mapping errors
+    }
+  }
 
   static const String _demoResetCode = '123456';
 
@@ -207,6 +261,15 @@ class AuthService {
 
   // Social sign-in
   Future<AppUser> loginWithGoogle() async {
+    // Use Supabase OAuth if available
+    if (SupabaseService.isInitialized) {
+      await Supabase.instance.client.auth.signInWithOAuth(Provider.google);
+      // The OAuth flow will redirect; auth listener will populate currentUser.
+      final user = _currentUser;
+      if (user != null) return user;
+      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+    }
+
     await Future.delayed(const Duration(milliseconds: 900));
     return _loginWithSocialProvider(
       email: 'google.user@mbg.io',
@@ -215,6 +278,13 @@ class AuthService {
   }
 
   Future<AppUser> loginWithApple() async {
+    if (SupabaseService.isInitialized) {
+      await Supabase.instance.client.auth.signInWithOAuth(Provider.apple);
+      final user = _currentUser;
+      if (user != null) return user;
+      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+    }
+
     await Future.delayed(const Duration(milliseconds: 900));
     return _loginWithSocialProvider(
       email: 'apple.user@mbg.io',
@@ -313,6 +383,9 @@ class AuthService {
   }
 
   void logout() {
+    if (SupabaseService.isInitialized) {
+      Supabase.instance.client.auth.signOut();
+    }
     _currentUser = null;
   }
 

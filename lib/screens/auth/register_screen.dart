@@ -82,8 +82,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithGoogle();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -98,8 +104,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithApple();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -115,7 +127,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await AuthService.instance.loginWithGithub();
       final user = AuthService.instance.currentUser;
-      if (user != null && mounted) _goToUserHome();
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {

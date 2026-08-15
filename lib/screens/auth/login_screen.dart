@@ -91,9 +91,17 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      final user = await AuthService.instance.loginWithGoogle();
-      if (!mounted) return;
-      _goToRoleHome(user);
+      await AuthService.instance.loginWithGoogle();
+      // If Supabase OAuth was used, navigation will happen when auth listener sets currentUser.
+      final user = AuthService.instance.currentUser;
+      if (user != null) {
+        if (!mounted) return;
+        _goToRoleHome(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -107,9 +115,16 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      final user = await AuthService.instance.loginWithApple();
-      if (!mounted) return;
-      _goToRoleHome(user);
+      await AuthService.instance.loginWithApple();
+      final user = AuthService.instance.currentUser;
+      if (user != null) {
+        if (!mounted) return;
+        _goToRoleHome(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
