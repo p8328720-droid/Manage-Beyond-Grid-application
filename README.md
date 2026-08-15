@@ -50,8 +50,8 @@ Menyediakan laporan penggunaan perangkat dalam bentuk grafik dan statistik yang 
 | Komponen                | Tools dan framework        |
 | ----------------------- | -------------------------- |
 | Mobile Development      | Flutter                    |
-| Cloud Platform          | Firebase / Cloud Computing |
-| Database                | Firebase         |
+| Cloud Platform          | Supabase / Cloud Computing |
+| Database                | Supabase        |
 | Artificial Intelligence | AI Analytics & Prediction  |
 | Komunikasi IoT          | MQTT / REST API            |
 

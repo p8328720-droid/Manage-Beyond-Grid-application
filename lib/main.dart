@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
 import 'services/app_settings.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/system_config_service.dart';
 import 'screens/admin/admin_home_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -13,6 +15,19 @@ import 'screens/user/user_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // load environment (expects a .env in project root with SUPABASE_URL and SUPABASE_ANON_KEY)
+  await dotenv.load(fileName: '.env');
+
+  // Initialize Supabase if env present
+  final supabaseUrl = dotenv.env['SUPABASE_URL'];
+  final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'];
+  if (supabaseUrl != null && supabaseKey != null && supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty) {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseKey,
+    );
+  }
+
   await AppSettings.instance.load();
   await SystemConfigService.instance.load();
   runApp(const MbgApp());
