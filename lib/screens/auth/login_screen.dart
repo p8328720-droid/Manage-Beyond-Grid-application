@@ -30,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGithubLoading = false;
   String? _errorMessage;
 
   @override
@@ -113,6 +114,23 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubLogin() async {
+    setState(() {
+      _isGithubLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await AuthService.instance.loginWithGithub();
+      // OAuth flow may redirect — when returning, current user should be set
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) _goToRoleHome(user);
+    } on AuthException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _isGithubLoading = false);
     }
   }
 
@@ -220,6 +238,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: 'Sign Up with Apple',
                   isLoading: _isAppleLoading,
                   onPressed: _handleAppleLogin,
+                ),
+                const SizedBox(height: 12),
+                SocialSignInButton(
+                  icon: const Icon(Icons.code, size: 20, color: Colors.black),
+                  label: 'Sign Up with GitHub',
+                  isLoading: _isGithubLoading,
+                  onPressed: _handleGithubLogin,
                 ),
                 const SizedBox(height: 28),
                 Center(
