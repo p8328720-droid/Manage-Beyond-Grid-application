@@ -27,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGithubLoading = false;
   String? _errorMessage;
 
   @override
@@ -81,8 +82,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithGoogle();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -97,12 +104,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithApple();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubSignUp() async {
+    setState(() {
+      _isGithubLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await AuthService.instance.loginWithGithub();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
+    } on AuthException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _isGithubLoading = false);
     }
   }
 
@@ -225,6 +260,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: 'Sign Up with Apple',
                   isLoading: _isAppleLoading,
                   onPressed: _handleAppleSignUp,
+                ),
+                const SizedBox(height: 12),
+                SocialSignInButton(
+                  icon: const Icon(Icons.code, size: 20, color: Colors.black),
+                  label: 'Sign Up with GitHub',
+                  isLoading: _isGithubLoading,
+                  onPressed: _handleGithubSignUp,
                 ),
                 const SizedBox(height: 24),
                 Center(

@@ -1,5 +1,7 @@
 import '../models/app_user.dart';
 import 'audit_log_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'supabase_service.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -10,8 +12,62 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  AuthService._internal();
+  AuthService._internal() {
+    _initSupabaseListener();
+  }
   static final AuthService instance = AuthService._internal();
+
+  // Subscribe to Supabase auth state when initialized
+  void _initSupabaseListener() {
+    if (!SupabaseService.isInitialized) return;
+
+    try {
+      // populate initial session
+      final supaUser = Supabase.instance.client.auth.currentUser;
+      if (supaUser != null) {
+        _loadUserFromSupabaseUser(supaUser);
+      }
+
+      // listen to auth changes
+      Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+        final user = event.session?.user;
+        if (user != null) {
+          _loadUserFromSupabaseUser(user);
+        } else {
+          _currentUser = null;
+        }
+      });
+    } catch (_) {
+      // ignore if Supabase not ready
+    }
+  }
+
+  Future<void> _loadUserFromSupabaseUser(User user) async {
+    try {
+      final profileRes = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      Map<String, dynamic>? profile;
+      if (profileRes is Map<String, dynamic>) profile = profileRes;
+
+      final appUser = AppUser(
+        id: user.id,
+        name: profile?['name'] ?? user.email ?? 'Pengguna',
+        email: user.email ?? '',
+        role: profile != null ? UserRoleX.fromApiValue(profile['role'] ?? '') : UserRole.pengguna,
+        isActive: profile?['is_active'] ?? true,
+        createdAt: profile != null && profile['created_at'] != null
+            ? DateTime.tryParse(profile['created_at'])
+            : null,
+      );
+      _currentUser = appUser;
+    } catch (e) {
+      // ignore mapping errors
+    }
+  }
 
   static const String _demoResetCode = '123456';
 
@@ -62,6 +118,41 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    // Try Supabase sign up if initialized
+    if (SupabaseService.isInitialized) {
+      final res = await Supabase.instance.client.auth.signUp(
+        email: email.trim(),
+        password: password,
+      );
+      final user = res.user;
+      if (user == null) {
+        throw const AuthException('Gagal mendaftar menggunakan Supabase.');
+      }
+
+      // Insert profile into "profiles" table
+      final profile = {
+        'id': user.id,
+        'name': name.trim(),
+        'email': email.trim(),
+        'role': 'pengguna',
+        'is_active': true,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      // insert profile (modern supabase client resolves when awaited)
+      await Supabase.instance.client.from('profiles').insert(profile).select();
+
+      final appUser = AppUser(
+        id: user.id,
+        name: name.trim(),
+        email: email.trim(),
+        role: UserRole.pengguna,
+        createdAt: DateTime.now(),
+      );
+      _currentUser = appUser;
+      return appUser;
+    }
+
+    // Fallback: in-memory demo
     await Future.delayed(const Duration(milliseconds: 700));
 
     if (name.trim().isEmpty || email.trim().isEmpty || password.isEmpty) {
@@ -92,6 +183,53 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    // If Supabase configured, use it
+    if (SupabaseService.isInitialized) {
+      final res = await Supabase.instance.client.auth.signInWithPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final user = res.user;
+      if (user == null) {
+        throw const AuthException('Email atau kata sandi salah.');
+      }
+
+      // fetch profile
+      final profileRes = await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      Map<String, dynamic>? profile;
+      if (profileRes is Map<String, dynamic>) profile = profileRes;
+
+      final appUser = AppUser(
+        id: user.id,
+        name: profile?['name'] ?? user.email ?? 'Pengguna',
+        email: user.email ?? email.trim(),
+        role: profile != null ? UserRoleX.fromApiValue(profile['role'] ?? '') : UserRole.pengguna,
+        isActive: profile?['is_active'] ?? true,
+        createdAt: profile != null && profile['created_at'] != null
+            ? DateTime.tryParse(profile['created_at'])
+            : null,
+      );
+
+      if (!appUser.isActive) {
+        throw const AuthException('Akun ini telah dinonaktifkan oleh administrator.');
+      }
+
+      _currentUser = appUser;
+      AuditLogService.instance.log(
+        actor: appUser.name,
+        category: AuditCategory.autentikasi,
+        action: 'Masuk ke aplikasi',
+        detail: '${appUser.email} (${appUser.role.label}) berhasil masuk.',
+      );
+      return _currentUser!;
+    }
+
+    // Fallback: demo
     await Future.delayed(const Duration(milliseconds: 700));
 
     final matches = _demoAccounts.where(
@@ -123,6 +261,15 @@ class AuthService {
 
   // Social sign-in
   Future<AppUser> loginWithGoogle() async {
+    // Use Supabase OAuth if available
+    if (SupabaseService.isInitialized) {
+      await Supabase.instance.client.auth.signInWithOAuth(Provider.google);
+      // The OAuth flow will redirect; auth listener will populate currentUser.
+      final user = _currentUser;
+      if (user != null) return user;
+      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+    }
+
     await Future.delayed(const Duration(milliseconds: 900));
     return _loginWithSocialProvider(
       email: 'google.user@mbg.io',
@@ -131,10 +278,28 @@ class AuthService {
   }
 
   Future<AppUser> loginWithApple() async {
+    if (SupabaseService.isInitialized) {
+      await Supabase.instance.client.auth.signInWithOAuth(Provider.apple);
+      final user = _currentUser;
+      if (user != null) return user;
+      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+    }
+
     await Future.delayed(const Duration(milliseconds: 900));
     return _loginWithSocialProvider(
       email: 'apple.user@mbg.io',
       name: 'Pengguna Apple',
+    );
+  }
+
+  // OAuth with GitHub via Supabase
+  Future<void> loginWithGithub() async {
+    if (!SupabaseService.isInitialized) {
+      throw const AuthException('Supabase belum dikonfigurasi.');
+    }
+
+    await Supabase.instance.client.auth.signInWithOAuth(
+      Provider.github,
     );
   }
 
@@ -218,6 +383,9 @@ class AuthService {
   }
 
   void logout() {
+    if (SupabaseService.isInitialized) {
+      Supabase.instance.client.auth.signOut();
+    }
     _currentUser = null;
   }
 
