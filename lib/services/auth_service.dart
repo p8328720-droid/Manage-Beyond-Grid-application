@@ -57,6 +57,7 @@ class AuthService {
         id: user.id,
         name: profile?['name'] ?? user.email ?? 'Pengguna',
         email: user.email ?? '',
+        phone: profile?['phone'] ?? '',
         role: profile != null
             ? UserRoleX.fromApiValue(profile['role'] ?? '')
             : UserRole.pengguna,
@@ -165,6 +166,7 @@ class AuthService {
         id: user.id,
         name: name.trim(),
         email: email.trim(),
+        phone: phone.trim(),
         role: UserRole.pengguna,
         createdAt: DateTime.now(),
       );
@@ -431,6 +433,8 @@ class AuthService {
   Future<AppUser> updateProfile({
     required String firstName,
     required String lastName,
+    required String email,
+    required String phone,
     DateTime? dateOfBirth,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
@@ -442,12 +446,47 @@ class AuthService {
     if (firstName.trim().isEmpty) {
       throw const AuthException('Nama depan wajib diisi.');
     }
+    if (email.trim().isEmpty || !email.contains('@')) {
+      throw const AuthException('Alamat email tidak valid.');
+    }
+    if (phone.trim().isEmpty) {
+      throw const AuthException('Nomor telepon wajib diisi.');
+    }
+
+    final emailChanged = email.trim().toLowerCase() != user.email.toLowerCase();
+    if (emailChanged &&
+        _demoAccounts.any(
+          (account) =>
+              account.email.toLowerCase() == email.trim().toLowerCase(),
+        )) {
+      throw const AuthException('Email sudah digunakan.');
+    }
 
     final fullName = lastName.trim().isEmpty
         ? firstName.trim()
         : '${firstName.trim()} ${lastName.trim()}';
-    final updated = user.copyWith(name: fullName, dateOfBirth: dateOfBirth);
-    _persistCurrentUser(updated);
+    final updated = user.copyWith(
+      name: fullName,
+      email: email.trim(),
+      phone: phone.trim(),
+      dateOfBirth: dateOfBirth,
+    );
+    if (SupabaseService.isInitialized && user.id.isNotEmpty) {
+      if (emailChanged) {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(email: email.trim()),
+        );
+      }
+      await Supabase.instance.client
+          .from('profiles')
+          .update({
+            'name': fullName,
+            'email': email.trim(),
+            'phone': phone.trim(),
+          })
+          .eq('id', user.id);
+    }
+    _persistCurrentUser(updated, email: email.trim());
     return updated;
   }
 
@@ -503,16 +542,16 @@ class AuthService {
     _currentUser = null;
   }
 
-  void _persistCurrentUser(AppUser updated) {
+  void _persistCurrentUser(AppUser updated, {String? email}) {
     _currentUser = updated;
     final index = _demoAccounts.indexWhere(
       (account) => account.email.toLowerCase() == updated.email.toLowerCase(),
     );
     if (index != -1) {
       _demoAccounts[index] = _DemoAccount(
-        email: _demoAccounts[index].email,
+        email: email ?? _demoAccounts[index].email,
         username: _demoAccounts[index].username,
-        phone: _demoAccounts[index].phone,
+        phone: updated.phone,
         password: _demoAccounts[index].password,
         user: updated,
       );

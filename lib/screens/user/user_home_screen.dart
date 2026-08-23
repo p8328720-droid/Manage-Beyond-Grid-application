@@ -27,15 +27,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
 
   AppUser? get _user => AuthService.instance.currentUser;
 
-
   bool get _alertEnabled => _user?.pushNotificationsEnabled ?? true;
 
   void _logout() {
     AuthService.instance.logout();
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      LoginScreen.routeName,
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(LoginScreen.routeName, (_) => false);
   }
 
   @override
@@ -49,107 +47,110 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
         child: _navIndex == 2
             ? ProfileTab(onLogout: _logout)
             : _navIndex == 1
-                ? const ReportsTab()
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _HeaderBar(
-                name: name,
-                onTapProfile: () => setState(() => _navIndex = 2),
-              ),
-              const SizedBox(height: 22),
-              const _StatusChips(),
-              const SizedBox(height: 28),
-              const _SectionTitle('Status Sistem'),
-              const SizedBox(height: 12),
-              _ToggleRow(
-                icon: Icons.cloud_sync_outlined,
-                label: 'Cloud Synchronization',
-                subtitle: 'Sinkronisasi data perangkat otomatis',
-                value: _cloudSyncEnabled,
-                onChanged: (v) => setState(() => _cloudSyncEnabled = v),
-              ),
-              const SizedBox(height: 12),
-              _ToggleRow(
-                icon: Icons.notifications_active_outlined,
-                label: 'Smart Alert & Notification',
-                subtitle: 'Notifikasi kondisi penting secara real-time',
-                value: _alertEnabled,
-                onChanged: (v) => setState(
-                  () => AuthService.instance.updatePushNotifications(v),
-                ),
-              ),
-              const SizedBox(height: 28),
-              const _SectionTitle('Kelola & Pantau'),
-              const SizedBox(height: 12),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.98,
-                children: [
-                  _FeatureCard(
-                    icon: Icons.dashboard_outlined,
-                    title: 'Smart Dashboard',
-                    subtitle: 'Semua status perangkat, satu layar',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const SmartDashboardScreen(),
+            ? const ReportsTab()
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _HeaderBar(
+                      name: name,
+                      onTapProfile: () => setState(() => _navIndex = 2),
+                    ),
+                    const SizedBox(height: 18),
+                    const _InternetImagePair(),
+                    const SizedBox(height: 22),
+                    const _StatusChips(),
+                    const SizedBox(height: 28),
+                    const _SectionTitle('Status Sistem'),
+                    const SizedBox(height: 12),
+                    _ToggleRow(
+                      icon: Icons.cloud_sync_outlined,
+                      label: 'Cloud Synchronization',
+                      subtitle: 'Sinkronisasi data perangkat otomatis',
+                      value: _cloudSyncEnabled,
+                      onChanged: (v) => setState(() => _cloudSyncEnabled = v),
+                    ),
+                    const SizedBox(height: 12),
+                    _ToggleRow(
+                      icon: Icons.notifications_active_outlined,
+                      label: 'Smart Alert & Notification',
+                      subtitle: 'Notifikasi kondisi penting secara real-time',
+                      value: _alertEnabled,
+                      onChanged: (v) => setState(
+                        () => AuthService.instance.updatePushNotifications(v),
                       ),
                     ),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.settings_remote_outlined,
-                    title: 'Remote Device Control',
-                    subtitle: 'Kontrol perangkat dari mana saja',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const RemoteDeviceControlScreen(),
-                      ),
-                    ),
-                  ),
-                  ListenableBuilder(
-                    listenable: AiInsightService.instance,
-                    builder: (context, _) {
-                      final alerts = AiInsightService.instance.criticalCount +
-                          AiInsightService.instance.warningCount;
-                      return _FeatureCard(
-                        icon: Icons.insights_outlined,
-                        title: 'AI Smart Insights',
-                        subtitle: 'Deteksi & prediksi gangguan otomatis',
-                        badgeCount: alerts,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const AiInsightsScreen(),
+                    const SizedBox(height: 28),
+                    const _SectionTitle('Kelola & Pantau'),
+                    const SizedBox(height: 12),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.98,
+                      children: [
+                        _FeatureCard(
+                          icon: Icons.dashboard_outlined,
+                          title: 'Smart Dashboard',
+                          subtitle: 'Semua status perangkat, satu layar',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const SmartDashboardScreen(),
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                  _FeatureCard(
-                    icon: Icons.photo_library_outlined,
-                    title: 'Banner Preview',
-                    subtitle: 'Lihat semua asset ruangan yang tersedia',
-                    onTap: () => Navigator.of(context).pushNamed(
-                      BannerPreviewScreen.routeName,
+                        _FeatureCard(
+                          icon: Icons.settings_remote_outlined,
+                          title: 'Remote Device Control',
+                          subtitle: 'Kontrol perangkat dari mana saja',
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const RemoteDeviceControlScreen(),
+                            ),
+                          ),
+                        ),
+                        ListenableBuilder(
+                          listenable: AiInsightService.instance,
+                          builder: (context, _) {
+                            final alerts =
+                                AiInsightService.instance.criticalCount +
+                                AiInsightService.instance.warningCount;
+                            return _FeatureCard(
+                              icon: Icons.insights_outlined,
+                              title: 'AI Smart Insights',
+                              subtitle: 'Deteksi & prediksi gangguan otomatis',
+                              badgeCount: alerts,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const AiInsightsScreen(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        _FeatureCard(
+                          icon: Icons.photo_library_outlined,
+                          title: 'Banner Preview',
+                          subtitle: 'Lihat semua asset ruangan yang tersedia',
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pushNamed(BannerPreviewScreen.routeName),
+                        ),
+                        _FeatureCard(
+                          icon: Icons.bar_chart_outlined,
+                          title: 'Analytics & Reports',
+                          subtitle: 'Grafik energi & riwayat aktivitas',
+                          onTap: () => setState(() => _navIndex = 1),
+                        ),
+                      ],
                     ),
-                  ),
-                  _FeatureCard(
-                    icon: Icons.bar_chart_outlined,
-                    title: 'Analytics & Reports',
-                    subtitle: 'Grafik energi & riwayat aktivitas',
-                    onTap: () => setState(() => _navIndex = 1),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        ),
       ),
       bottomNavigationBar: _BottomNavBar(
         selectedIndex: _navIndex,
@@ -277,8 +278,9 @@ class _StatusChips extends StatelessWidget {
                 Icon(
                   item.icon,
                   size: 20,
-                  color:
-                      highlighted ? AppColors.textPrimary : AppColors.textSecondary,
+                  color: highlighted
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
                 Text(
                   item.value,
@@ -433,7 +435,10 @@ class _FeatureCard extends StatelessWidget {
                   if (badgeCount > 0) ...[
                     const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.danger,
                         borderRadius: BorderRadius.circular(12),
@@ -567,6 +572,43 @@ class _NavItem extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _InternetImagePair extends StatelessWidget {
+  const _InternetImagePair();
+
+  static const _images = [
+    'https://images.unsplash.com/photo-1558008258-3256797b43f3?w=900&q=80',
+    'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=900&q=80',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 132,
+      child: Row(
+        children: [
+          for (var index = 0; index < _images.length; index++) ...[
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.network(
+                  _images[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.surfaceElevated,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_not_supported_outlined),
+                  ),
+                ),
+              ),
+            ),
+            if (index == 0) const SizedBox(width: 12),
+          ],
+        ],
       ),
     );
   }

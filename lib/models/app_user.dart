@@ -2,10 +2,10 @@ enum UserRole { administrator, pengguna, teknisi }
 
 extension UserRoleX on UserRole {
   String get label => switch (this) {
-        UserRole.administrator => 'Administrator',
-        UserRole.pengguna => 'Pengguna',
-        UserRole.teknisi => 'Teknisi / Maintenance',
-      };
+    UserRole.administrator => 'Administrator',
+    UserRole.pengguna => 'Pengguna',
+    UserRole.teknisi => 'Teknisi / Maintenance',
+  };
 
   static UserRole fromApiValue(String value) {
     switch (value.trim().toLowerCase()) {
@@ -27,6 +27,7 @@ class AppUser {
   final String id;
   final String name;
   final String email;
+  final String phone;
   final UserRole role;
   final DateTime? dateOfBirth;
   final bool pushNotificationsEnabled;
@@ -37,6 +38,7 @@ class AppUser {
     required this.id,
     required this.name,
     required this.email,
+    this.phone = '',
     required this.role,
     this.dateOfBirth,
     this.pushNotificationsEnabled = true,
@@ -57,12 +59,15 @@ class AppUser {
       id: json['user_id'].toString(),
       name: json['name'] as String,
       email: json['email'] as String,
+      phone: json['phone'] as String? ?? '',
       role: UserRoleX.fromApiValue(json['role'] as String),
     );
   }
 
   AppUser copyWith({
     String? name,
+    String? email,
+    String? phone,
     UserRole? role,
     DateTime? dateOfBirth,
     bool? pushNotificationsEnabled,
@@ -71,7 +76,8 @@ class AppUser {
     return AppUser(
       id: id,
       name: name ?? this.name,
-      email: email,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
       role: role ?? this.role,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       pushNotificationsEnabled:

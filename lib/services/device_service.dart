@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter_application_1/models/smart_device.dart';
+import 'package:flutter_application_1/services/supabase_service.dart';
 
 class DeviceService extends ChangeNotifier {
   DeviceService._internal() {
@@ -48,16 +49,25 @@ class DeviceService extends ChangeNotifier {
   void addDevice(SmartDevice device) {
     _devices.add(device);
     notifyListeners();
+    _syncAdd(device);
   }
 
   void removeDevice(String id) {
+    final removed = _devices.where((d) => d.id == id).toList();
     _devices.removeWhere((d) => d.id == id);
     notifyListeners();
+    for (final device in removed) {
+      _syncDelete(device);
+    }
   }
 
   void removeDevicesInRoom(String room) {
+    final removed = _devices.where((d) => d.room == room).toList();
     _devices.removeWhere((d) => d.room == room);
     notifyListeners();
+    for (final device in removed) {
+      _syncDelete(device);
+    }
   }
 
   void setPower(String id, bool value) {
@@ -69,9 +79,55 @@ class DeviceService extends ChangeNotifier {
     }
     device.lastSeen = DateTime.now();
     notifyListeners();
+    _syncUpdate(device);
+  }
+
+  Future<void> _syncAdd(SmartDevice device) async {
+    if (!SupabaseService.isInitialized) return;
+    final userId = SupabaseService.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      await SupabaseService.client.from('devices').insert({
+        'user_id': userId,
+        'device_name': device.name,
+        'device_type': device.type.name,
+        'location': device.room,
+        'status': device.isOnline ? 'online' : 'offline',
+      });
+    } catch (_) {
+      // The local operation remains usable when the network is unavailable.
+    }
+  }
+
+  Future<void> _syncUpdate(SmartDevice device) async {
+    if (!SupabaseService.isInitialized) return;
+    final userId = SupabaseService.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      await SupabaseService.client
+          .from('devices')
+          .update({'status': device.isOnline ? 'online' : 'offline'})
+          .eq('user_id', userId)
+          .eq('device_name', device.name);
+    } catch (_) {}
+  }
+
+  Future<void> _syncDelete(SmartDevice device) async {
+    if (!SupabaseService.isInitialized) return;
+    final userId = SupabaseService.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      await SupabaseService.client
+          .from('devices')
+          .delete()
+          .eq('user_id', userId)
+          .eq('device_name', device.name);
+    } catch (_) {}
   }
 
   String generateId() => 'dev-${DateTime.now().microsecondsSinceEpoch}';
+
+  Future<void> syncDevice(SmartDevice device) => _syncUpdate(device);
 
   void refreshNow() => _tick();
 
@@ -89,8 +145,9 @@ class DeviceService extends ChangeNotifier {
 
         if (device.isOn) {
           final drift = _rnd.nextInt(9) - 4;
-          device.signalStrength =
-              (device.signalStrength + drift).clamp(10, 100).toInt();
+          device.signalStrength = (device.signalStrength + drift)
+              .clamp(10, 100)
+              .toInt();
         }
 
         if (_rnd.nextDouble() < 0.03) {
