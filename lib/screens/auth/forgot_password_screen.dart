@@ -1,12 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../services/auth_service.dart';
-import '../../../../../widgets/brand_widgets.dart';
-import '../../../../../widgets/mbg_text_field.dart';
-import 'register_screen.dart';
-import 'verify_code_screen.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
+import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/widgets/brand_widgets.dart';
+import 'package:flutter_application_1/widgets/mbg_text_field.dart';
+import 'package:flutter_application_1/screens/auth/register_screen.dart';
+import 'package:flutter_application_1/screens/auth/verify_code_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   static const routeName = '/forgot-password';

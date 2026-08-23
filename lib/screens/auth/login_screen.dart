@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/app_user.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/services/system_config_service.dart';
 import 'package:flutter_application_1/widgets/brand_widgets.dart';
 import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 import 'package:flutter_application_1/screens/admin/admin_home_screen.dart';
 import 'package:flutter_application_1/screens/teknisi/teknisi_home_screen.dart';
 import 'package:flutter_application_1/screens/user/user_home_screen.dart';
-import 'forgot_password_screen.dart';
-import 'register_screen.dart';
+import 'package:flutter_application_1/screens/auth/forgot_password_screen.dart';
+import 'package:flutter_application_1/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   static const routeName = '/login';
@@ -29,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGithubLoading = false;
   String? _errorMessage;
 
   @override
@@ -66,6 +68,15 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
+      if (SystemConfigService.instance.maintenanceMode &&
+          user.role != UserRole.administrator) {
+        AuthService.instance.logout();
+        setState(() {
+          _errorMessage =
+              'Sistem sedang dalam mode pemeliharaan. Hanya administrator yang dapat masuk.';
+        });
+        return;
+      }
       _goToRoleHome(user);
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
@@ -80,9 +91,17 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      final user = await AuthService.instance.loginWithGoogle();
-      if (!mounted) return;
-      _goToRoleHome(user);
+      await AuthService.instance.loginWithGoogle();
+      // If Supabase OAuth was used, navigation will happen when auth listener sets currentUser.
+      final user = AuthService.instance.currentUser;
+      if (user != null) {
+        if (!mounted) return;
+        _goToRoleHome(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -96,13 +115,37 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      final user = await AuthService.instance.loginWithApple();
-      if (!mounted) return;
-      _goToRoleHome(user);
+      await AuthService.instance.loginWithApple();
+      final user = AuthService.instance.currentUser;
+      if (user != null) {
+        if (!mounted) return;
+        _goToRoleHome(user);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.'),
+        ));
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubLogin() async {
+    setState(() {
+      _isGithubLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await AuthService.instance.loginWithGithub();
+      // OAuth flow may redirect — when returning, current user should be set
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) _goToRoleHome(user);
+    } on AuthException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _isGithubLoading = false);
     }
   }
 
@@ -210,6 +253,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: 'Sign Up with Apple',
                   isLoading: _isAppleLoading,
                   onPressed: _handleAppleLogin,
+                ),
+                const SizedBox(height: 12),
+                SocialSignInButton(
+                  icon: const Icon(Icons.code, size: 20, color: Colors.black),
+                  label: 'Sign Up with GitHub',
+                  isLoading: _isGithubLoading,
+                  onPressed: _handleGithubLogin,
                 ),
                 const SizedBox(height: 28),
                 Center(

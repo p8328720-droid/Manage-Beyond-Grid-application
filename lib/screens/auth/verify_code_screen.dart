@@ -1,11 +1,11 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../services/auth_service.dart';
-import '../../../../../widgets/brand_widgets.dart';
-import '../../../../../widgets/mbg_text_field.dart';
-import 'change_password_screen.dart';
+import 'package:flutter_application_1/core/theme/app_theme.dart';
+import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/widgets/brand_widgets.dart';
+import 'package:flutter_application_1/widgets/mbg_text_field.dart';
+import 'package:flutter_application_1/screens/auth/change_password_screen.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   static const routeName = '/verify-code';
