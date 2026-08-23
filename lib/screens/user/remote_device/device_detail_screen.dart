@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/models/smart_device.dart';
 import 'package:flutter_application_1/services/app_settings.dart';
+import 'package:flutter_application_1/services/device_service.dart';
 import 'package:flutter_application_1/services/usage_analytics_service.dart';
 import 'package:flutter_application_1/widgets/device_control_widgets.dart';
 import 'package:flutter_application_1/widgets/device_sliders.dart';
@@ -68,7 +69,20 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
                   Expanded(
                     child: SingleChildScrollView(
                       physics: BouncingScrollPhysics(),
-                      child: _buildControls(),
+                      child: Column(
+                        children: [
+                          _buildControls(),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _confirmChanges,
+                              icon: const Icon(Icons.check_rounded),
+                              label: const Text('CONFIRM'),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -77,6 +91,24 @@ class _DeviceDetailScreenState extends State<DeviceDetailScreen> {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _confirmChanges() async {
+    AppSettings.instance.feedback();
+    await DeviceService.instance.syncDevice(_device);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Berhasil'),
+        content: Text('Perubahan ${_device.name} berhasil disimpan.'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -131,7 +163,10 @@ class _TvControls extends StatelessWidget {
                 ),
                 Text(
                   'Channel',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -320,8 +355,8 @@ class _GenericLevelControls extends StatelessWidget {
     final label = device.type == DeviceType.fan
         ? 'Kecepatan'
         : device.type == DeviceType.speaker
-            ? 'Volume'
-            : 'Level';
+        ? 'Volume'
+        : 'Level';
 
     return Column(
       children: [

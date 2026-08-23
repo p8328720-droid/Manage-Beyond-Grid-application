@@ -18,12 +18,23 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
   late final TextEditingController _firstNameController;
   late final TextEditingController _lastNameController;
   late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
   DateTime? _dateOfBirth;
   bool _saving = false;
 
   static const _months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
   ];
 
   AppUser? get _user => AuthService.instance.currentUser;
@@ -35,6 +46,7 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
     _dateOfBirth = user?.dateOfBirth;
   }
 
@@ -43,6 +55,7 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -68,6 +81,8 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
       await AuthService.instance.updateProfile(
         firstName: _firstNameController.text,
         lastName: _lastNameController.text,
+        email: _emailController.text,
+        phone: _phoneController.text,
         dateOfBirth: _dateOfBirth,
       );
       if (!mounted) return;
@@ -77,9 +92,9 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
       widget.onBack();
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -92,10 +107,7 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ProfileSubPageHeader(
-            title: 'Profile details',
-            onBack: widget.onBack,
-          ),
+          ProfileSubPageHeader(title: 'Profile details', onBack: widget.onBack),
           const SizedBox(height: 24),
           TextFormField(
             controller: _firstNameController,
@@ -132,14 +144,21 @@ class _ProfileDetailsViewState extends State<ProfileDetailsView> {
           const SizedBox(height: 14),
           TextFormField(
             controller: _emailController,
-            enabled: false,
             style: const TextStyle(fontSize: 15),
+            keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(hintText: 'bagas@example.com'),
           ),
           const SizedBox(height: 6),
           const Text(
-            'Alamat email Anda tidak dapat diubah',
+            'Gunakan alamat email yang aktif',
             style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+          ),
+          const SizedBox(height: 14),
+          TextFormField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            style: const TextStyle(fontSize: 15),
+            decoration: const InputDecoration(hintText: 'Nomor telepon'),
           ),
           const SizedBox(height: 28),
           SizedBox(
