@@ -3,14 +3,11 @@ import 'package:flutter/material.dart';
 
 import 'package:flutter_application_1/core/theme/app_theme.dart';
 import 'package:flutter_application_1/services/auth_service.dart';
+import 'package:flutter_application_1/services/system_config_service.dart';
 import 'package:flutter_application_1/widgets/brand_widgets.dart';
 import 'package:flutter_application_1/widgets/mbg_text_field.dart';
 import 'package:flutter_application_1/screens/user/user_home_screen.dart';
 
-/// "Sign Up" screen — the account-creation use case that feeds new
-/// Pengguna (End User) accounts into the system. New sign-ups always land
-/// in the Pengguna role, since Administrator and Teknisi accounts are
-/// provisioned separately (see "Kelola Pengguna" in the use-case diagram).
 class RegisterScreen extends StatefulWidget {
   static const routeName = '/register';
 
@@ -23,24 +20,39 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
   bool _isSubmitting = false;
   bool _isGoogleLoading = false;
   bool _isAppleLoading = false;
+  bool _isGithubLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleCreateAccount() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!SystemConfigService.instance.allowRegistration) {
+      setState(() {
+        _errorMessage =
+            'Pendaftaran akun baru sedang ditutup oleh administrator.';
+      });
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
@@ -50,8 +62,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     try {
       await AuthService.instance.register(
         name: _nameController.text,
+        username: _usernameController.text,
+        phone: _phoneController.text,
         email: _emailController.text,
         password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
       );
       if (!mounted) return;
       _goToUserHome();
@@ -63,10 +78,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _goToUserHome() {
-    Navigator.of(context).pushNamedAndRemoveUntil(
-      UserHomeScreen.routeName,
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil(UserHomeScreen.routeName, (_) => false);
   }
 
   Future<void> _handleGoogleSignUp() async {
@@ -76,8 +90,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithGoogle();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.',
+            ),
+          ),
+        );
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
@@ -92,12 +116,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
     try {
       await AuthService.instance.loginWithApple();
-      if (!mounted) return;
-      _goToUserHome();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.',
+            ),
+          ),
+        );
+      }
     } on AuthException catch (e) {
       setState(() => _errorMessage = e.message);
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubSignUp() async {
+    setState(() {
+      _isGithubLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      await AuthService.instance.loginWithGithub();
+      final user = AuthService.instance.currentUser;
+      if (user != null && mounted) {
+        _goToUserHome();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Selesaikan proses OAuth di browser. Anda akan otomatis masuk setelah otorisasi.',
+            ),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      setState(() => _errorMessage = e.message);
+    } finally {
+      if (mounted) setState(() => _isGithubLoading = false);
     }
   }
 
@@ -123,9 +183,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 28),
                 Text(
                   'SIGN UP',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 24,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleMedium?.copyWith(fontSize: 24),
                 ),
                 const SizedBox(height: 10),
                 const Text(
@@ -146,6 +206,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Nama wajib diisi.';
                     }
+                    if (value.trim().length < 5) {
+                      return 'Nama minimal 5 karakter.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                MbgTextField(
+                  controller: _usernameController,
+                  label: 'Username',
+                  showIcon: false,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Username wajib diisi.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                MbgTextField(
+                  controller: _phoneController,
+                  label: 'Nomor Telepon',
+                  showIcon: false,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Nomor telepon wajib diisi.';
+                    }
                     return null;
                   },
                 ),
@@ -161,6 +249,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                     if (!value.contains('@')) {
                       return 'Format email tidak valid.';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 14),
+                MbgTextField(
+                  controller: _confirmPasswordController,
+                  label: 'Confirm Password',
+                  showIcon: false,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Konfirmasi password wajib diisi.';
+                    }
+                    if (value != _passwordController.text) {
+                      return 'Password dan konfirmasi password harus sama.';
                     }
                     return null;
                   },
@@ -199,8 +303,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           height: 22,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.4,
-                            valueColor:
-                                AlwaysStoppedAnimation(AppColors.textPrimary),
+                            valueColor: AlwaysStoppedAnimation(
+                              AppColors.textPrimary,
+                            ),
                           ),
                         )
                       : const Text('CREATE ACCOUNT'),
@@ -220,6 +325,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: 'Sign Up with Apple',
                   isLoading: _isAppleLoading,
                   onPressed: _handleAppleSignUp,
+                ),
+                const SizedBox(height: 12),
+                SocialSignInButton(
+                  icon: const Icon(Icons.code, size: 20, color: Colors.black),
+                  label: 'Sign Up with GitHub',
+                  isLoading: _isGithubLoading,
+                  onPressed: _handleGithubSignUp,
                 ),
                 const SizedBox(height: 24),
                 Center(

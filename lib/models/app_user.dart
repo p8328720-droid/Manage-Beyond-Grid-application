@@ -28,13 +28,29 @@ class AppUser {
   final String name;
   final String email;
   final UserRole role;
+  final DateTime? dateOfBirth;
+  final bool pushNotificationsEnabled;
+  final bool isActive;
+  final DateTime? createdAt;
 
   const AppUser({
     required this.id,
     required this.name,
     required this.email,
     required this.role,
+    this.dateOfBirth,
+    this.pushNotificationsEnabled = true,
+    this.isActive = true,
+    this.createdAt,
   });
+
+  // Profile details screen splits the full name into first/last name.
+  String get firstName => name.trim().split(' ').first;
+
+  String get lastName {
+    final parts = name.trim().split(' ');
+    return parts.length > 1 ? parts.sublist(1).join(' ') : '';
+  }
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
     return AppUser(
@@ -42,6 +58,26 @@ class AppUser {
       name: json['name'] as String,
       email: json['email'] as String,
       role: UserRoleX.fromApiValue(json['role'] as String),
+    );
+  }
+
+  AppUser copyWith({
+    String? name,
+    UserRole? role,
+    DateTime? dateOfBirth,
+    bool? pushNotificationsEnabled,
+    bool? isActive,
+  }) {
+    return AppUser(
+      id: id,
+      name: name ?? this.name,
+      email: email,
+      role: role ?? this.role,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      pushNotificationsEnabled:
+          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt,
     );
   }
 }
