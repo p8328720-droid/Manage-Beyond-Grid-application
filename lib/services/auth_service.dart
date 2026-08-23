@@ -57,7 +57,9 @@ class AuthService {
         id: user.id,
         name: profile?['name'] ?? user.email ?? 'Pengguna',
         email: user.email ?? '',
-        role: profile != null ? UserRoleX.fromApiValue(profile['role'] ?? '') : UserRole.pengguna,
+        role: profile != null
+            ? UserRoleX.fromApiValue(profile['role'] ?? '')
+            : UserRole.pengguna,
         isActive: profile?['is_active'] ?? true,
         createdAt: profile != null && profile['created_at'] != null
             ? DateTime.tryParse(profile['created_at'])
@@ -115,9 +117,25 @@ class AuthService {
 
   Future<AppUser> register({
     required String name,
+    required String username,
+    required String phone,
     required String email,
     required String password,
+    required String confirmPassword,
   }) async {
+    if (name.trim().length < 5) {
+      throw const AuthException('Nama lengkap minimal 5 karakter.');
+    }
+    if (username.trim().isEmpty || phone.trim().isEmpty) {
+      throw const AuthException('Username dan nomor telepon wajib diisi.');
+    }
+    if (!email.contains('@')) {
+      throw const AuthException('Format email tidak valid.');
+    }
+    if (password != confirmPassword) {
+      throw const AuthException('Password dan konfirmasi password harus sama.');
+    }
+
     // Try Supabase sign up if initialized
     if (SupabaseService.isInitialized) {
       final res = await Supabase.instance.client.auth.signUp(
@@ -133,6 +151,8 @@ class AuthService {
       final profile = {
         'id': user.id,
         'name': name.trim(),
+        'username': username.trim(),
+        'phone': phone.trim(),
         'email': email.trim(),
         'role': 'pengguna',
         'is_active': true,
@@ -155,15 +175,18 @@ class AuthService {
     // Fallback: in-memory demo
     await Future.delayed(const Duration(milliseconds: 700));
 
-    if (name.trim().isEmpty || email.trim().isEmpty || password.isEmpty) {
-      throw const AuthException('Semua kolom wajib diisi.');
-    }
-
     final alreadyExists = _demoAccounts.any(
       (account) => account.email.toLowerCase() == email.trim().toLowerCase(),
     );
     if (alreadyExists) {
       throw const AuthException('Email sudah terdaftar.');
+    }
+    final usernameExists = _demoAccounts.any(
+      (account) =>
+          account.username.toLowerCase() == username.trim().toLowerCase(),
+    );
+    if (usernameExists) {
+      throw const AuthException('Username sudah digunakan.');
     }
 
     final newUser = AppUser(
@@ -173,7 +196,13 @@ class AuthService {
       role: UserRole.pengguna,
     );
     _demoAccounts.add(
-      _DemoAccount(email: email.trim(), password: password, user: newUser),
+      _DemoAccount(
+        email: email.trim(),
+        username: username.trim(),
+        phone: phone.trim(),
+        password: password,
+        user: newUser,
+      ),
     );
     _currentUser = newUser;
     return newUser;
@@ -208,7 +237,9 @@ class AuthService {
         id: user.id,
         name: profile?['name'] ?? user.email ?? 'Pengguna',
         email: user.email ?? email.trim(),
-        role: profile != null ? UserRoleX.fromApiValue(profile['role'] ?? '') : UserRole.pengguna,
+        role: profile != null
+            ? UserRoleX.fromApiValue(profile['role'] ?? '')
+            : UserRole.pengguna,
         isActive: profile?['is_active'] ?? true,
         createdAt: profile != null && profile['created_at'] != null
             ? DateTime.tryParse(profile['created_at'])
@@ -216,7 +247,9 @@ class AuthService {
       );
 
       if (!appUser.isActive) {
-        throw const AuthException('Akun ini telah dinonaktifkan oleh administrator.');
+        throw const AuthException(
+          'Akun ini telah dinonaktifkan oleh administrator.',
+        );
       }
 
       _currentUser = appUser;
@@ -254,7 +287,8 @@ class AuthService {
       actor: matchedUser.name,
       category: AuditCategory.autentikasi,
       action: 'Masuk ke aplikasi',
-      detail: '${matchedUser.email} (${matchedUser.role.label}) berhasil masuk.',
+      detail:
+          '${matchedUser.email} (${matchedUser.role.label}) berhasil masuk.',
     );
     return _currentUser!;
   }
@@ -267,7 +301,9 @@ class AuthService {
       // The OAuth flow will redirect; auth listener will populate currentUser.
       final user = _currentUser;
       if (user != null) return user;
-      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+      throw const AuthException(
+        'Proses OAuth dimulai. Selesaikan autentikasi di browser.',
+      );
     }
 
     await Future.delayed(const Duration(milliseconds: 900));
@@ -282,7 +318,9 @@ class AuthService {
       await Supabase.instance.client.auth.signInWithOAuth(Provider.apple);
       final user = _currentUser;
       if (user != null) return user;
-      throw const AuthException('Proses OAuth dimulai. Selesaikan autentikasi di browser.');
+      throw const AuthException(
+        'Proses OAuth dimulai. Selesaikan autentikasi di browser.',
+      );
     }
 
     await Future.delayed(const Duration(milliseconds: 900));
@@ -298,9 +336,7 @@ class AuthService {
       throw const AuthException('Supabase belum dikonfigurasi.');
     }
 
-    await Supabase.instance.client.auth.signInWithOAuth(
-      Provider.github,
-    );
+    await Supabase.instance.client.auth.signInWithOAuth(Provider.github);
   }
 
   AppUser _loginWithSocialProvider({
@@ -367,6 +403,8 @@ class AuthService {
     if (index != -1) {
       _demoAccounts[index] = _DemoAccount(
         email: _demoAccounts[index].email,
+        username: _demoAccounts[index].username,
+        phone: _demoAccounts[index].phone,
         password: newPassword,
         user: _demoAccounts[index].user,
       );
@@ -405,8 +443,9 @@ class AuthService {
       throw const AuthException('Nama depan wajib diisi.');
     }
 
-    final fullName =
-        lastName.trim().isEmpty ? firstName.trim() : '${firstName.trim()} ${lastName.trim()}';
+    final fullName = lastName.trim().isEmpty
+        ? firstName.trim()
+        : '${firstName.trim()} ${lastName.trim()}';
     final updated = user.copyWith(name: fullName, dateOfBirth: dateOfBirth);
     _persistCurrentUser(updated);
     return updated;
@@ -444,6 +483,8 @@ class AuthService {
 
     _demoAccounts[index] = _DemoAccount(
       email: _demoAccounts[index].email,
+      username: _demoAccounts[index].username,
+      phone: _demoAccounts[index].phone,
       password: newPassword,
       user: _demoAccounts[index].user,
     );
@@ -470,6 +511,8 @@ class AuthService {
     if (index != -1) {
       _demoAccounts[index] = _DemoAccount(
         email: _demoAccounts[index].email,
+        username: _demoAccounts[index].username,
+        phone: _demoAccounts[index].phone,
         password: _demoAccounts[index].password,
         user: updated,
       );
@@ -528,6 +571,8 @@ class AuthService {
     final updated = current.copyWith(role: role);
     _demoAccounts[index] = _DemoAccount(
       email: _demoAccounts[index].email,
+      username: _demoAccounts[index].username,
+      phone: _demoAccounts[index].phone,
       password: _demoAccounts[index].password,
       user: updated,
     );
@@ -594,6 +639,8 @@ class AuthService {
 
     _demoAccounts[index] = _DemoAccount(
       email: _demoAccounts[index].email,
+      username: _demoAccounts[index].username,
+      phone: _demoAccounts[index].phone,
       password: newPassword,
       user: _demoAccounts[index].user,
     );
@@ -602,18 +649,23 @@ class AuthService {
       actor: _adminActorName,
       category: AuditCategory.pengguna,
       action: 'Mereset kata sandi pengguna',
-      detail: '${_demoAccounts[index].user.name} (${_demoAccounts[index].user.email}).',
+      detail:
+          '${_demoAccounts[index].user.name} (${_demoAccounts[index].user.email}).',
     );
   }
 }
 
 class _DemoAccount {
   final String email;
+  final String username;
+  final String phone;
   final String password;
   final AppUser user;
 
   const _DemoAccount({
     required this.email,
+    this.username = '',
+    this.phone = '',
     required this.password,
     required this.user,
   });
